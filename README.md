@@ -131,5 +131,5 @@ DentistUIAngular/
 
 ## 📞 التواصل
 
-* البريد الإلكتروني: [ahmed101noor@example.com](mailto:ahmed101noor@example.com)
+* البريد الإلكتروني: [Ahmedkhaliednoor@gmail.com](mailto:Ahmedkhaliednoor@gmail.com)
 * GitHub: [https://github.com/Ahmed101Noor](https://github.com/Ahmed101Noor)
