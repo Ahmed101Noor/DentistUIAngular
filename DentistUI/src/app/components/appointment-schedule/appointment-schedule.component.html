@@ -1,0 +1,405 @@
+<div class="bg-white rounded-lg shadow-md p-6">
+  <h2 class="text-2xl font-semibold text-primary-800 mb-6">عرض المواعيد</h2>
+
+  
+  <!-- Filters Section -->
+  <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Search -->
+        <div>
+          <label for="search" class="block text-sm font-medium text-gray-700 mb-1">البحث</label>
+          <input type="text"
+                 id="search"
+                 [(ngModel)]="searchTerm"
+                 (ngModelChange)="onSearchChange()"
+                 class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                 placeholder="البحث باسم المريض...">
+        </div>
+    <!-- Date Filter -->
+    <div>
+      <label for="dateFilter" class="block text-sm font-medium text-gray-700 mb-1">تصفية حسب التاريخ</label>
+      <input type="date"
+             id="dateFilter"
+             [(ngModel)]="filterDate"
+             (ngModelChange)="onDateFilterChange()"
+             class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+    </div>
+    <!-- Status Filter -->
+    <div>
+      <label for="statusFilter" class="block text-sm font-medium text-gray-700 mb-1">تصفية حسب الحالة</label>
+      <select id="statusFilter"
+              [(ngModel)]="filterStatus"
+              (ngModelChange)="onStatusFilterChange()"
+              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+        <option value="">الكل</option>
+        <option value="Pending">{{ getArabicStatus('Pending') }}</option>
+        <option value="Done">{{ getArabicStatus('Done') }}</option>
+        <option value="Missed">{{ getArabicStatus('Missed') }}</option>
+        <option value="Cancelled">{{ getArabicStatus('Cancelled') }}</option>
+      </select>
+    </div>
+
+  </div>
+
+  <!-- Appointments Table -->
+  <div class="overflow-x-auto p-4">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">المريض</th>
+          <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الموعد القادم</th>
+          <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نوع الموعد</th>
+          <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الحالة</th>
+          <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <tr *ngFor="let appointment of currentAppointments" class="hover:bg-gray-50">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center">
+              <div class="flex-shrink-0 h-10 w-10">
+                <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                  <span class="text-primary-800 font-medium">{{ appointment.patientFullName.charAt(0) }}</span>
+                </div>
+              </div>
+              <div class="mr-4">
+                <div class="text-sm font-medium text-gray-900">{{ appointment.patientFullName }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ appointment.appointmentDateTime | date:'yyyy/MM/dd - hh:mm a':'':'ar' }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+            {{ appointment.serviceNames.join(', ') || '-' }}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+            <span [ngClass]="{
+              'status-badge-scheduled': getArabicStatus(appointment.status) === 'مجدول',
+              'status-badge-done': getArabicStatus(appointment.status) === 'مكتمل',
+              'status-badge-missed': getArabicStatus(appointment.status) === 'فات',
+              'status-badge-cancelled': getArabicStatus(appointment.status) === 'ملغي'
+            }" class="inline-block px-3 py-1 rounded-full font-semibold">
+              {{ getArabicStatus(appointment.status) }}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <div class="flex space-x-2 space-x-reverse">
+              <!-- عرض -->
+              <button (click)="handleViewAppointment(appointment)" 
+                      class="text-primary-600 hover:text-primary-900" 
+                      title="عرض">
+                <svg xmlns="http://www.w3.org/2000/svg" 
+                     class="h-5 w-5" fill="none" 
+                     viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5
+                           c4.478 0 8.268 2.943 9.542 7
+                           -1.274 4.057-5.064 7-9.542 7
+                           -4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+          
+              <!-- تعديل -->
+              <button (click)="handleEditAppointment(appointment)" 
+                      class="text-blue-600 hover:text-blue-900" 
+                      title="تعديل">
+                <svg xmlns="http://www.w3.org/2000/svg" 
+                     class="h-5 w-5" fill="none" 
+                     viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11
+                           a2 2 0 002-2v-5m-1.414-9.414
+                           a2 2 0 112.828 2.828L11.828 15H9
+                           v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+          
+              <!-- حذف -->
+              <button (click)="handleDeleteAppointment(appointment.id)" 
+                      class="text-red-600 hover:text-red-900" 
+                      title="حذف">
+                <svg xmlns="http://www.w3.org/2000/svg" 
+                     class="h-5 w-5" fill="none" 
+                     viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862
+                           a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6
+                           m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3
+                           M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          </td>          
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="totalPages > 1" class="mt-6 flex items-center justify-between">
+    <div class="text-sm text-gray-700">
+      عرض {{ (currentPage - 1) * appointmentsPerPage + 1 }} إلى {{ min(currentPage * appointmentsPerPage, filteredAppointments.length) }} من {{ filteredAppointments.length }} موعد
+    </div>
+    <div class="flex space-x-2 space-x-reverse">
+      <button *ngIf="currentPage > 1"
+              (click)="onPageChange(currentPage - 1)"
+              class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+        السابق
+      </button>
+      <button *ngFor="let page of pages"
+              (click)="onPageChange(page)"
+              [class]="'px-3 py-2 border rounded-md text-sm font-medium ' + (page === currentPage ? 'bg-primary-600 text-white border-primary-600' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50')">
+        {{ page }}
+      </button>
+      <button *ngIf="currentPage < totalPages"
+              (click)="onPageChange(currentPage + 1)"
+              class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+        التالي
+      </button>
+    </div>
+  </div>
+
+  <!-- No Results -->
+  <div *ngIf="filteredAppointments.length === 0" class="text-center py-8">
+    <div class="text-gray-500 text-lg">لا توجد نتائج</div>
+    <div class="text-gray-400 text-sm">جرب تغيير معايير البحث</div>
+  </div>
+</div>
+
+<!-- Appointment Details Modal -->
+<div *ngIf="showAppointmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center p-6 border-b border-gray-200">
+      <h3 class="text-xl font-semibold text-primary-800">تفاصيل الموعد</h3>
+      <button (click)="closeAppointmentModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">×</button>
+    </div>
+    <div class="p-6" *ngIf="selectedAppointment">
+      <div class="mb-4"><strong>المريض:</strong> {{ selectedAppointment.patientFullName }}</div>
+      <div class="mb-4"><strong>الخدمات:</strong> {{ selectedAppointment.serviceNames.join(', ') }}</div>
+      <div class="mb-4"><strong>تاريخ ووقت الموعد:</strong> {{ selectedAppointment.appointmentDateTime | date:'yyyy/MM/dd - hh:mm a':'':'ar' }}</div>
+      <div class="mb-4"><strong>الحالة:</strong> {{ getArabicStatus(selectedAppointment.status) }}</div>
+      <div class="mb-4"><strong>تم إرسال تذكير؟</strong> {{ selectedAppointment.isReminderSent ? 'نعم' : 'لا' }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Appointment Modal -->
+<div *ngIf="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center p-6 border-b border-gray-200">
+      <h3 class="text-xl font-semibold text-primary-800">تعديل موعد</h3>
+      <button (click)="closeEditModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">×</button>
+    </div>
+    <div *ngIf="editMessage?.text" [class]="'mx-6 mt-4 p-4 rounded-md ' + (editMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')">
+      {{ editMessage.text }}
+    </div>
+    <div class="p-6" *ngIf="selectedAppointment">
+      <div class="mb-6">
+        <h4 class="text-lg font-medium text-primary-700 mb-2">المريض: {{ selectedAppointment.patientFullName }}</h4>
+      </div>
+      <form [formGroup]="editForm" (ngSubmit)="onEditSubmit()">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ ووقت الموعد</label>
+            <input type="datetime-local" formControlName="appointmentDateTime" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">الحالة</label>
+            <select formControlName="status" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <option value="Pending">مجدول</option>
+              <option value="Done">مكتمل</option>
+              <option value="Missed">فات</option>
+              <option value="Cancelled">ملغي</option>
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">الخدمات</label>
+            <ul class="w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+              <li *ngFor="let service of services; let i = index" 
+                  class="w-full border-b border-gray-200 last:border-b-0" 
+                  [class.rounded-t-lg]="i === 0" 
+                  [class.rounded-b-lg]="i === services.length - 1">
+                <div class="flex items-center ps-3">
+                  <input 
+                    [id]="'edit-service-' + service.id" 
+                    type="checkbox" 
+                    [value]="service.id"
+                    [checked]="isServiceSelected(service.id)"
+                    (change)="onEditServiceCheckboxChange(service.id, $event)"
+                    class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-primary-500 focus:ring-2">
+                  <label 
+                    [for]="'edit-service-' + service.id" 
+                    class="w-full py-3 ms-2 text-sm font-medium text-gray-900">
+                    {{ service.name }}
+                  </label>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="flex justify-end space-x-3 space-x-reverse mt-6">
+          <button type="button" (click)="closeEditModal()" class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500">إلغاء</button>
+          <button type="submit" [disabled]="editForm.invalid" class="bg-primary-600 text-white px-6 py-2 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">حفظ التعديلات</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Existing schedule form below -->
+<div class="bg-white rounded-lg shadow-md p-6 max-w-3xl mx-auto">
+  <h2 class="text-2xl font-semibold text-primary-800 mb-6">جدولة موعد</h2>
+
+  <!-- Success/Error Message -->
+  <div *ngIf="message.text" 
+       [class]="'mb-4 p-4 rounded-md ' + (message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')">
+    {{ message.text }}
+  </div>
+
+  <form [formGroup]="appointmentForm" (ngSubmit)="onSubmit()">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Patient Selection -->
+      <div class="col-span-1 md:col-span-2">
+        <label for="patientSearchDropdown" class="block text-sm font-medium text-gray-700 mb-1">
+          اختيار المريض <span class="text-red-500">*</span>
+        </label>
+        
+        <!-- Searchable Dropdown Container -->
+        <div class="relative">
+          <!-- Dropdown Trigger Button -->
+          <button id="patientSearchDropdown"
+                  (click)="toggleDropdown()"
+                  type="button"
+                  class="w-full text-right text-gray-700 bg-white border border-gray-300 focus:ring-primary-500 focus:border-primary-500 font-medium rounded-md text-sm px-4 py-2.5 inline-flex justify-between items-center">
+            {{ selectedPatient?.fullName || 'اختر مريضاً' }}
+            <svg class="w-2.5 h-2.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 10 6">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M1 1l4 4 4-4" />
+            </svg>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div *ngIf="showPatientDropdown"
+               class="absolute left-0 right-0 z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-72 overflow-y-auto text-sm box-border">
+
+            <!-- Search Box -->
+            <div class="p-2">
+              <input type="text"
+                     [(ngModel)]="patientSearchTerm"
+                     [ngModelOptions]="{standalone: true}"
+                     (input)="onPatientSearchInput($event)"
+                     (blur)="onPatientInputBlur()"
+                     placeholder="ابحث بالاسم أو الهاتف"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-primary-500 focus:border-primary-500" />
+            </div>
+
+            <!-- List of Patients -->
+            <div *ngIf="filteredPatients.length > 0">
+              <div *ngFor="let patient of filteredPatients"
+                   (mousedown)="selectPatient(patient)"
+                   class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0">
+                <div class="font-medium text-gray-900">{{ patient.fullName }}</div>
+                <div class="text-sm text-gray-500">{{ patient.phoneNumber }} - {{ patient.age }} سنة</div>
+              </div>
+            </div>
+
+            <!-- No Results -->
+            <div *ngIf="filteredPatients.length === 0" class="px-4 py-3 text-gray-500 text-center">
+              لا توجد نتائج لـ "{{ patientSearchTerm }}"
+            </div>
+          </div>
+
+          <!-- Clear Selection Button -->
+          <div *ngIf="selectedPatient" class="mt-2 text-right">
+            <button (click)="clearPatientSelection()"
+                    class="text-sm text-red-500 hover:underline focus:outline-none">
+              إزالة الاختيار
+            </button>
+          </div>
+        </div>
+        
+        <!-- Hidden form control for validation -->
+        <input type="hidden" formControlName="patientId">
+        
+        <div *ngIf="getFieldError('patientId')" class="text-red-500 text-sm mt-1">
+          {{ getFieldError('patientId') }}
+        </div>
+      </div>
+
+      <!-- Appointment Date -->
+      <div>
+        <label for="appointmentDate" class="block text-sm font-medium text-gray-700 mb-1">
+          تاريخ الموعد <span class="text-red-500">*</span>
+        </label>
+        <input type="date" 
+               id="appointmentDate" 
+               formControlName="appointmentDate"
+               [min]="today"
+               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+        <div *ngIf="getFieldError('appointmentDate')" class="text-red-500 text-sm mt-1">
+          {{ getFieldError('appointmentDate') }}
+        </div>
+      </div>
+
+      <!-- Services Multi-Select -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          الخدمات <span class="text-red-500">*</span>
+        </label>
+        <ul class="w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+          <li *ngFor="let service of services; let i = index" 
+              class="w-full border-b border-gray-200 last:border-b-0" 
+              [class.rounded-t-lg]="i === 0" 
+              [class.rounded-b-lg]="i === services.length - 1">
+            <div class="flex items-center ps-3">
+              <input 
+                [id]="'service-' + service.id" 
+                type="checkbox" 
+                [value]="service.id"
+                (change)="onServiceCheckboxChange(service.id, $event)"
+                class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-primary-500 focus:ring-2">
+              <label 
+                [for]="'service-' + service.id" 
+                class="w-full py-3 ms-2 text-sm font-medium text-gray-900">
+                {{ service.name }} ({{ service.durationInMinutes }} دقيقة)
+              </label>
+            </div>
+          </li>
+        </ul>
+        <div *ngIf="getFieldError('serviceIds')" class="text-red-500 text-sm mt-1">
+          {{ getFieldError('serviceIds') }}
+        </div>
+      </div>
+
+      <!-- Slot Picker -->
+      <div>
+        <label for="slot" class="block text-sm font-medium text-gray-700 mb-1">
+          الوقت المتاح <span class="text-red-500">*</span>
+        </label>
+        <select id="slot" formControlName="slot" (change)="onSlotChange($event)"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+          <option value="">اختر الوقت</option>
+          <option *ngFor="let slot of availableSlots" [value]="slot">
+            {{ slot | date:'shortTime' }}
+          </option>
+        </select>
+        <div *ngIf="!availableSlots.length && appointmentForm.value.appointmentDate && appointmentForm.value.serviceIds.length" class="text-red-500 text-sm mt-1">
+          لا توجد أوقات متاحة لهذا اليوم والخدمات المختارة.
+        </div>
+        <div *ngIf="getFieldError('slot')" class="text-red-500 text-sm mt-1">
+          {{ getFieldError('slot') }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="flex justify-end mt-6">
+      <button type="submit" 
+              [disabled]="appointmentForm.invalid"
+              class="bg-primary-600 text-white px-6 py-2 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">
+        جدولة الموعد
+      </button>
+    </div>
+  </form>
+</div>

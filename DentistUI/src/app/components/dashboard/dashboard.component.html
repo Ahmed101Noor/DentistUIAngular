@@ -1,0 +1,173 @@
+<div class="bg-white rounded-lg shadow-md p-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-primary-800 mb-2">لوحة التحكم</h1>
+    <p class="text-gray-600">مرحباً بك في نظام إدارة طب الأسنان</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex items-center justify-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+    <span class="mr-3 text-gray-600">جاري التحميل...</span>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading">
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Total Patients -->
+      <div class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-primary-100 text-sm">إجمالي المرضى</p>
+            <p class="text-3xl font-bold">{{ stats.totalPatients }}</p>
+          </div>
+          <div class="text-4xl">👥</div>
+        </div>
+      </div>
+
+      <!-- Today's Appointments -->
+      <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-green-100 text-sm">مواعيد اليوم</p>
+            <p class="text-3xl font-bold">{{ stats.todayAppointments }}</p>
+          </div>
+          <div class="text-4xl">📅</div>
+        </div>
+      </div>
+
+      <!-- Pending Appointments -->
+      <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-yellow-100 text-sm">مواعيد معلقة</p>
+            <p class="text-3xl font-bold">{{ stats.pendingAppointments }}</p>
+          </div>
+          <div class="text-4xl">⏰</div>
+        </div>
+      </div>
+
+      <!-- Completed Treatments -->
+      <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-purple-100 text-sm">علاجات مكتملة</p>
+            <p class="text-3xl font-bold">{{ stats.completedTreatments }}</p>
+          </div>
+          <div class="text-4xl">🦷</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mb-8">
+      <h2 class="text-xl font-semibold text-primary-800 mb-4">إجراءات سريعة</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <a routerLink="/register" 
+           class="bg-white border-2 border-primary-200 rounded-lg p-4 text-center hover:border-primary-400 hover:bg-primary-50 transition-colors">
+          <div class="text-3xl mb-2">👤</div>
+          <div class="font-medium text-primary-800">تسجيل مريض جديد</div>
+        </a>
+        
+        <a routerLink="/schedule" 
+           class="bg-white border-2 border-primary-200 rounded-lg p-4 text-center hover:border-primary-400 hover:bg-primary-50 transition-colors">
+          <div class="text-3xl mb-2">📅</div>
+          <div class="font-medium text-primary-800">جدولة موعد</div>
+        </a>
+        
+        <a routerLink="/patients" 
+           class="bg-white border-2 border-primary-200 rounded-lg p-4 text-center hover:border-primary-400 hover:bg-primary-50 transition-colors">
+          <div class="text-3xl mb-2">📋</div>
+          <div class="font-medium text-primary-800">عرض المرضى</div>
+        </a>
+        
+        <a routerLink="/reports" 
+           class="bg-white border-2 border-primary-200 rounded-lg p-4 text-center hover:border-primary-400 hover:bg-primary-50 transition-colors">
+          <div class="text-3xl mb-2">📊</div>
+          <div class="font-medium text-primary-800">التقارير</div>
+        </a>
+        <a routerLink="/treatments" 
+        class="bg-white border-2 border-primary-200 rounded-lg p-4 text-center hover:border-primary-400 hover:bg-primary-50 transition-colors">
+       <div class="text-3xl mb-2">🦷</div>
+       <div class="font-medium text-primary-800">خطط العلاج</div>
+     </a>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Upcoming Appointments -->
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-primary-800 mb-4">المواعيد القادمة</h3>
+        <div class="space-y-3">
+          <div *ngFor="let appointment of upcomingAppointments" 
+               class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center">
+              <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mr-3">
+                <span class="text-primary-800 font-medium">{{ appointment.patientFullName.charAt(0) }}</span>
+              </div>
+              <div>
+                <div class="font-medium text-gray-900">{{ appointment.patientFullName }}</div>
+                <div class="text-sm text-gray-600">{{ appointment.serviceNames.join(', ') }}</div>
+              </div>
+            </div>
+            <div class="text-left">
+              <div class="font-medium text-gray-900">
+                {{ appointment.appointmentDateTime | date:'yyyy/MM/dd - hh:mm a':'':'ar' }}
+              </div>
+              <span [class]="'px-2 py-1 rounded-full text-xs font-medium ' + getStatusBadgeClass(appointment.status)">
+                {{ getStatusName(appointment.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 text-center">
+          <a routerLink="/schedule" class="text-primary-600 hover:text-primary-800 text-sm font-medium">
+            عرض جميع المواعيد →
+          </a>
+        </div>
+      </div>
+
+      <!-- Recent Activities -->
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-primary-800 mb-4">النشاطات الأخيرة</h3>
+        <div class="space-y-4">
+          <div *ngFor="let activity of recentActivities" 
+               class="flex items-start space-x-3 space-x-reverse">
+            <div class="text-2xl">{{ getActivityIcon(activity.type) }}</div>
+            <div class="flex-1">
+              <div class="font-medium text-gray-900">{{ activity.title }}</div>
+              <div class="text-sm text-gray-600">{{ activity.description }}</div>
+              <div class="text-xs text-gray-500 mt-1">{{ activity.time | date:'yyyy/MM/dd - hh:mm a':'':'ar' }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 text-center">
+          <a routerLink="/reports" class="text-primary-600 hover:text-primary-800 text-sm font-medium">
+            عرض جميع النشاطات →
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Info Section -->
+    <div class="mt-8 bg-gradient-to-r from-primary-50 to-blue-50 rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-primary-800 mb-3">معلومات مهمة</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div class="flex items-center">
+          <div class="w-2 h-2 bg-green-500 rounded-full ml-2"></div>
+          <span class="text-gray-700">النظام يعمل بشكل طبيعي</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-2 h-2 bg-blue-500 rounded-full ml-2"></div>
+          <span class="text-gray-700">آخر نسخة احتياطية: اليوم 02:00</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-2 h-2 bg-purple-500 rounded-full ml-2"></div>
+          <span class="text-gray-700">{{ stats.totalPatients }} مريض مسجل في النظام</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

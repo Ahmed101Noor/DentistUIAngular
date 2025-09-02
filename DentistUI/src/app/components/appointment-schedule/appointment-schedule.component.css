@@ -1,0 +1,51 @@
+/* Appointment Schedule Component Styles */
+:host {
+  display: block;
+}
+
+/* Form validation styles */
+.form-error {
+  border-color: #ef4444;
+}
+
+.form-error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .col-span-1.md\:col-span-2 {
+    grid-column: span 1 / span 1;
+  }
+}
+
+/* Focus styles for better accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+} 
+
+.status-badge-scheduled {
+  background: #e3f0ff;
+  color: #1a237e;
+}
+.status-badge-done {
+  background: #e6ffe6;
+  color: #006400;
+}
+.status-badge-missed {
+  background: #f3f4f6;
+  color: #757575;
+}
+.status-badge-cancelled {
+  background: #fff9e3;
+  color: #b8860b;
+} 

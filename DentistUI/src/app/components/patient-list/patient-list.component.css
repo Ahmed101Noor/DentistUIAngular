@@ -1,0 +1,70 @@
+/* Patient List Component Styles */
+:host {
+  display: block;
+}
+
+/* RTL Support */
+.space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+/* Table styles */
+table {
+  direction: rtl;
+}
+
+th, td {
+  text-align: right;
+}
+
+/* Hover effects */
+.hover\:bg-gray-50:hover {
+  background-color: #f9fafb;
+}
+
+/* Status badge styles */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Button styles */
+button {
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+  .overflow-x-auto {
+    overflow-x: auto;
+  }
+  
+  table {
+    min-width: 800px;
+  }
+}
+
+/* Pagination styles */
+.pagination-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.pagination-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+} 

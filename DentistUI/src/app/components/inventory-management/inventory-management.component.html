@@ -1,0 +1,1304 @@
+<div class="bg-white rounded-lg shadow-md p-6" dir="rtl">
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                 <div class="stats-card bg-white rounded-lg shadow p-6 flex items-center">
+                     <div class="stats-icon rounded-full bg-blue-100 p-3 mr-4">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                         </svg>
+                     </div>
+                     <div>
+                         <p class="text-sm text-gray-500">إجمالي الخامات</p>
+                         <p class="stats-number text-2xl font-bold text-gray-800">{{ inventoryStats.totalItems }}</p>
+                         <p class="growth-indicator text-xs text-green-600">+{{ inventoryStats.monthlyGrowth || 0 }} هذا الشهر</p>
+                     </div>
+                 </div>
+                 <div class="stats-card bg-white rounded-lg shadow p-6 flex items-center">
+                     <div class="stats-icon rounded-full bg-red-100 p-3 mr-4">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                         </svg>
+                     </div>
+                     <div>
+                         <p class="text-sm text-gray-500">خامات منخفضة</p>
+                         <p class="stats-number text-2xl font-bold text-gray-800">{{ inventoryStats.lowStockItems }}</p>
+                         <p class="text-xs text-red-600 alert-animation">تحتاج للطلب</p>
+                     </div>
+                 </div>
+                 <div class="stats-card bg-white rounded-lg shadow p-6 flex items-center">
+                     <div class="stats-icon rounded-full bg-green-100 p-3 mr-4">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                         </svg>
+                     </div>
+                     <div>
+                         <p class="text-sm text-gray-500">قيمة المخزون</p>
+                         <p class="stats-number text-2xl font-bold text-gray-800">{{ inventoryStats.totalValue | number }} ج.م</p>
+                         <p class="growth-indicator text-xs text-green-600">+{{ inventoryStats.valueGrowth || 0 }}% عن الشهر السابق</p>
+                     </div>
+                 </div>
+                </div>
+  <!-- Action Buttons -->
+  <div class="flex flex-wrap gap-4 mb-6">
+    <button class="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded flex items-center transition-colors" (click)="openAddItemModal()">
+      <i class="fa fa-plus mr-2"></i>إضافة خامة جديدة
+    </button>
+    <button class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors" (click)="exportToCSV()">
+      <i class="fa fa-download mr-2"></i>تصدير البيانات
+    </button>
+  </div>
+  <!-- Tabs -->
+  <div class="border-b mb-6">
+    <nav class="flex space-x-reverse space-x-4">
+      <button class="px-4 py-2 transition-colors" [class.bg-blue-600]="activeTab === 'all-items'" [class.text-white]="activeTab === 'all-items'" (click)="switchTab('all-items')">كل الخامات</button>
+      <button class="px-4 py-2 transition-colors" [class.bg-blue-600]="activeTab === 'categories'" [class.text-white]="activeTab === 'categories'" (click)="switchTab('categories')">التصنيفات</button>
+      <button class="px-4 py-2 transition-colors" [class.bg-blue-600]="activeTab === 'low-stock'" [class.text-white]="activeTab === 'low-stock'" (click)="switchTab('low-stock')">
+        الخامات المنخفضة
+        <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">{{ inventoryStats.lowStockItems }}</span>
+      </button>
+      <button class="px-4 py-2 transition-colors" [class.bg-blue-600]="activeTab === 'analytics'" [class.text-white]="activeTab === 'analytics'" (click)="switchTab('analytics')">
+        <i class="fa fa-chart-bar ml-2"></i>التقارير
+      </button>
+    </nav>
+  </div>
+  <!-- All Items Tab -->
+  <div class="tab-content" [class.active]="activeTab === 'all-items'">
+    <!-- Filters -->
+    <div class="mb-6 flex flex-wrap gap-4 items-end">
+      <div class="w-48">
+        <label class="block text-sm mb-1">التصنيف</label>
+        <select class="w-full p-2 border rounded focus:ring-2 focus:ring-primary-500 transition-shadow" [(ngModel)]="selectedCategory" (change)="onFilterChange()">
+          <option value="all">جميع التصنيفات</option>
+          <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+        </select>
+      </div>
+      <div class="w-48">
+        <label class="block text-sm mb-1">حالة المخزون</label>
+        <select class="w-full p-2 border rounded focus:ring-2 focus:ring-primary-500 transition-shadow" [(ngModel)]="selectedStatus" (change)="onFilterChange()">
+          <option value="all">جميع الحالات</option>
+          <option value="InStock">متوفر</option>
+          <option value="Low">منخفض</option>
+          <option value="Out">نفذت الكمية</option>
+        </select>
+      </div>
+      <div class="w-48">
+        <label class="block text-sm mb-1">ترتيب حسب</label>
+        <select class="w-full p-2 border rounded focus:ring-2 focus:ring-primary-500 transition-shadow" [(ngModel)]="selectedSort" (change)="onFilterChange()">
+          <option value="name-asc">الاسم (تصاعدي)</option>
+          <option value="name-desc">الاسم (تنازلي)</option>
+          <option value="stock-asc">المخزون (تصاعدي)</option>
+          <option value="stock-desc">المخزون (تنازلي)</option>
+          <option value="price-asc">السعر (تصاعدي)</option>
+          <option value="price-desc">السعر (تنازلي)</option>
+        </select>
+      </div>
+      <div class="w-64">
+        <label class="block text-sm mb-1">البحث</label>
+        <input type="text" class="w-full p-2 border rounded focus:ring-2 focus:ring-primary-500 transition-shadow" [(ngModel)]="searchTerm" (input)="onSearch()" placeholder="ابحث عن خامة...">
+      </div>
+      <div class="flex items-end">
+        <button class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="resetFilters()">إعادة تعيين</button>
+      </div>
+    </div>
+    <!-- Items Table - Desktop View -->
+    <div class="hidden lg:block overflow-x-auto rounded-lg overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">الخامة</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">الكود</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">التصنيف</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">المخزون</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">وحدة القياس</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">سعر الوحدة</th>
+            <th class="px-8 py-4 text-center text-sm font-medium text-gray-500 uppercase tracking-wider">
+              <div class="flex items-center justify-center space-x-2">
+                <span>آخر تحديث</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </th>
+            <th class="px-6 py-4 text-center text-sm font-medium text-gray-500 uppercase tracking-wider">
+              <div class="flex items-center justify-center space-x-2">
+                <span>الحالة</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of inventoryItems" class="border-b hover:bg-gray-50 transition-colors">
+            <td class="p-2 text-sm whitespace-normal text-center">
+              <div class="flex items-center justify-center">
+                <div>
+                  <p class="font-medium cursor-pointer hover:text-blue-600 transition-colors" (click)="openItemDetailsModal(item)">{{ item.name }}</p>
+                  <p class="text-sm text-gray-500">{{ item.manufacturer }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="p-2 text-sm whitespace-normal text-center">{{ item.code }}</td>
+            <td class="p-2 text-sm whitespace-normal text-center">{{ getCategoryName(item.categoryId) }}</td>
+            <td class="p-2 text-sm whitespace-normal text-center">
+              <span [class]="item.currentStock <= item.minStockLevel ? 'text-red-600 font-bold' : ''">{{ item.currentStock }}</span> {{ item.unit }}
+            </td>
+            <td class="p-2 text-sm whitespace-normal text-center">{{ item.unit }}</td>
+            <td class="p-2 text-sm whitespace-normal text-center">{{ item.unitPrice }} ج.م</td>
+            <td class="p-2 text-sm whitespace-normal text-center">{{ item.lastUpdated | date: 'dd MMMM yyyy h:mm a' : '' : 'ar-EG' }}</td>
+            <td class="p-2 text-sm whitespace-normal text-center">
+              <span class="px-2 py-1 rounded {{ getStatusBadgeClass(item.status) }}">{{ getItemStatusName(item.status) }}</span>
+            </td>
+            <td class="py-1 text-sm whitespace-normal">
+              <div class="flex justify-center gap-0.5 flex-wrap">
+                <button (click)="openItemDetailsModal(item)" class="text-primary-600 hover:text-primary-900 transition-colors" title="عرض التفاصيل">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5 c4.478 0 8.268 2.943 9.542 7 -1.274 4.057-5.064 7-9.542 7 -4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button (click)="openEditItemModal(item)" class="text-blue-600 hover:text-blue-900 transition-colors" title="تعديل">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11 a2 2 0 002-2v-5m-1.414-9.414 a2 2 0 112.828 2.828L11.828 15H9 v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button (click)="openConsumeModal(item)" class="text-orange-600 hover:text-orange-900 transition-colors" title="استهلاك">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                  </svg>
+                </button>
+                <button (click)="openRestockModal(item)" class="text-green-600 hover:text-green-900 transition-colors" title="إعادة تخزين">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </button>
+                <button (click)="openAdjustModal(item)" class="text-purple-600 hover:text-purple-900 transition-colors" title="تعديل المخزون">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                  </svg>
+                </button>
+                <button (click)="confirmDeleteItem(item)" class="text-red-600 hover:text-red-900 transition-colors" title="حذف">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862 a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6 m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3 M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Items Cards - Mobile View -->
+    <div class="lg:hidden space-y-4">
+      <div *ngFor="let item of inventoryItems" class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start mb-3">
+          <div class="flex-1">
+            <h3 class="font-semibold text-lg text-gray-900 cursor-pointer hover:text-blue-600 transition-colors" (click)="openItemDetailsModal(item)">{{ item.name }}</h3>
+            <p class="text-sm text-gray-500 mt-1">{{ item.manufacturer }}</p>
+            <div class="flex items-center mt-2">
+              <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full mr-2">{{ item.code }}</span>
+              <span class="px-2 py-1 rounded text-xs {{ getStatusBadgeClass(item.status) }}">{{ getItemStatusName(item.status) }}</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-lg font-bold" [class]="item.currentStock <= item.minStockLevel ? 'text-red-600' : 'text-gray-900'">
+              {{ item.currentStock }} {{ item.unit }}
+            </div>
+            <div class="text-sm text-gray-500">{{ item.unitPrice }} ج.م</div>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+          <div>
+            <span class="text-gray-500">التصنيف:</span>
+            <span class="font-medium mr-1">{{ getCategoryName(item.categoryId) }}</span>
+          </div>
+          <div>
+            <span class="text-gray-500">آخر تحديث:</span>
+            <span class="font-medium mr-1">{{ item.lastUpdated | date: 'dd/MM/yyyy' : '' : 'ar-EG' }}</span>
+          </div>
+        </div>
+        
+        <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+          <div class="flex gap-2 flex-wrap">
+            <button (click)="openItemDetailsModal(item)" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-md text-sm transition-colors" title="عرض التفاصيل">
+              <i class="fa fa-eye ml-1"></i>عرض
+            </button>
+            <button (click)="openEditItemModal(item)" class="bg-green-50 text-green-600 hover:bg-green-100 px-3 py-1 rounded-md text-sm transition-colors" title="تعديل">
+              <i class="fa fa-edit ml-1"></i>تعديل
+            </button>
+          </div>
+          <div class="flex gap-1">
+            <button (click)="openConsumeModal(item)" class="text-orange-600 hover:text-orange-900 p-2 transition-colors" title="استهلاك">
+              <i class="fa fa-minus"></i>
+            </button>
+            <button (click)="openRestockModal(item)" class="text-green-600 hover:text-green-900 p-2 transition-colors" title="إعادة تخزين">
+              <i class="fa fa-plus"></i>
+            </button>
+            <button (click)="openAdjustModal(item)" class="text-purple-600 hover:text-purple-900 p-2 transition-colors" title="تعديل المخزون">
+              <i class="fa fa-sliders-h"></i>
+            </button>
+            <button (click)="confirmDeleteItem(item)" class="text-red-600 hover:text-red-900 p-2 transition-colors" title="حذف">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Pagination -->
+    <div *ngIf="getTotalPages() > 1" class="mt-6 flex items-center justify-center">
+      <p>عرض {{ (currentPage - 1) * itemsPerPage + 1 }} إلى {{ Math.min(currentPage * itemsPerPage, totalItems) }} من {{ totalItems }} خامة</p>
+      <div class="flex gap-2">
+        <button class="px-3 py-1 border rounded disabled:opacity-50" [disabled]="currentPage === 1" (click)="onPageChange(currentPage - 1)">السابق</button>
+        <button *ngFor="let page of getPageNumbers()" class="px-3 py-1 border rounded" [class.bg-blue-600]="page === currentPage" [class.text-white]="page === currentPage" (click)="onPageChange(page)">
+          {{ page }}
+        </button>
+        <button class="px-3 py-1 border rounded disabled:opacity-50" [disabled]="currentPage === getTotalPages()" (click)="onPageChange(currentPage + 1)">التالي</button>
+      </div>
+    </div>
+  </div>
+  <!-- Categories Tab -->
+  <div class="tab-content" [class.active]="activeTab === 'categories'">
+    <div class="flex justify-end mb-4">
+      <button class="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded flex items-center transition-colors" (click)="openAddCategoryModal()">
+        <i class="fa fa-plus mr-2"></i>إضافة تصنيف جديد
+      </button>
+    </div>
+    <!-- Categories Table - Desktop View -->
+    <div class="hidden md:block overflow-x-auto rounded-lg overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">التصنيف</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">عدد الخامات</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">إجمالي القيمة</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let category of getPaginatedCategories()" class="border-b hover:bg-gray-50 transition-colors">
+            <td class="p-2 text-sm whitespace-normal font-medium text-center">{{ category.name }}</td>
+            <td class="p-2 text-sm whitespace-normal text-center">{{ category.itemCount }}</td>
+            <td class="p-2 text-sm whitespace-normal text-center">{{ category.totalValue | number }} ج.م</td>
+            <td class="p-2 text-sm whitespace-normal">
+              <div class="flex justify-center space-x-1 space-x-reverse">
+                <button (click)="openEditCategoryModal(category)" class="text-blue-600 hover:text-blue-900 transition-colors" title="تعديل">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11 a2 2 0 002-2v-5m-1.414-9.414 a2 2 0 112.828 2.828L11.828 15H9 v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button (click)="confirmDeleteCategory(category)" class="text-red-600 hover:text-red-900 transition-colors" title="حذف">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862 a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6 m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3 M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Categories Cards - Mobile View -->
+    <div class="md:hidden space-y-4">
+      <div *ngFor="let category of getPaginatedCategories()" class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start mb-3">
+          <div class="flex-1">
+            <h3 class="font-semibold text-lg text-gray-900">{{ category.name }}</h3>
+            <div class="flex items-center mt-2 space-x-4 space-x-reverse">
+              <div class="flex items-center">
+                <i class="fa fa-box text-blue-500 ml-2"></i>
+                <span class="text-sm text-gray-600">{{ category.itemCount }} خامة</span>
+              </div>
+              <div class="flex items-center">
+                <i class="fa fa-money-bill text-green-500 ml-2"></i>
+                <span class="text-sm font-medium text-gray-900">{{ category.totalValue | number }} ج.م</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+          <button (click)="openEditCategoryModal(category)" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-2 rounded-md text-sm transition-colors" title="تعديل">
+            <i class="fa fa-edit ml-1"></i>تعديل
+          </button>
+          <button (click)="confirmDeleteCategory(category)" class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded-md text-sm transition-colors" title="حذف">
+            <i class="fa fa-trash ml-1"></i>حذف
+          </button>
+        </div>
+      </div>
+    </div>
+
+<!-- Low Stock Pagination -->
+<div *ngIf="getTotalLowStockPages() > 1" class="mt-6 flex items-center justify-center">
+      <p>عرض {{ (currentCategoryPage - 1) * categoriesPerPage + 1 }} إلى {{ Math.min(currentCategoryPage * categoriesPerPage, categories.length) }} من {{ categories.length }} تصنيف</p>
+      <div class="flex gap-2">
+        <button class="px-3 py-1 border rounded disabled:opacity-50" [disabled]="currentCategoryPage === 1" (click)="onCategoryPageChange(currentCategoryPage - 1)">السابق</button>
+        <button *ngFor="let page of getCategoryPageNumbers()" class="px-3 py-1 border rounded" [class.bg-blue-600]="page === currentCategoryPage" [class.text-white]="page === currentCategoryPage" (click)="onCategoryPageChange(page)">
+          {{ page }}
+        </button>
+        <button class="px-3 py-1 border rounded disabled:opacity-50" [disabled]="currentCategoryPage === getTotalCategoryPages()" (click)="onCategoryPageChange(currentCategoryPage + 1)">التالي</button>
+      </div>
+    </div>
+  </div>
+  <!-- Low Stock Tab -->
+  <div class="tab-content" [class.active]="activeTab === 'low-stock'">
+    <!-- Enhanced Alert Cards with Animation -->
+    <div class="alert-container mb-6">
+      <div class="alert-card critical-alert mb-4" *ngIf="getOutOfStockCount() > 0">
+        <div class="alert-content bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-500 p-6 rounded-lg shadow-md">
+          <div class="flex items-start">
+            <div class="alert-icon-wrapper">
+              <i class="fa fa-exclamation-circle text-red-600 text-2xl alert-icon"></i>
+            </div>
+            <div class="flex-1 mr-4">
+              <div class="alert-header flex items-center justify-between mb-2">
+                <h3 class="font-bold text-red-800 text-lg">⚠️ تنبيه عاجل: خامات نفذت</h3>
+                <span class="alert-badge bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">{{ getOutOfStockCount() }}</span>
+              </div>
+              <p class="text-red-700 mb-3">يوجد <strong>{{ getOutOfStockCount() }}</strong> من الخامات نفذت بالكامل وتحتاج إلى طلب فوري.</p>
+              <div class="alert-actions">
+                <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 transform hover:scale-105">
+                  <i class="fa fa-shopping-cart mr-2"></i>طلب الآن
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert-card warning-alert mb-4" *ngIf="getLowStockCount() > 0">
+        <div class="alert-content bg-gradient-to-r from-yellow-50 to-yellow-100 border-l-4 border-yellow-500 p-6 rounded-lg shadow-md">
+          <div class="flex items-start">
+            <div class="alert-icon-wrapper">
+              <i class="fa fa-exclamation-triangle text-yellow-600 text-2xl alert-icon"></i>
+            </div>
+            <div class="flex-1 mr-4">
+              <div class="alert-header flex items-center justify-between mb-2">
+                <h3 class="font-bold text-yellow-800 text-lg">⚡ تنبيه: خامات منخفضة</h3>
+                <span class="alert-badge bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium">{{ getLowStockCount() }}</span>
+              </div>
+              <p class="text-yellow-700 mb-3">يوجد <strong>{{ getLowStockCount() }}</strong> من الخامات وصلت إلى الحد الأدنى وتحتاج إلى طلب قريباً.</p>
+              <div class="alert-actions">
+                <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 transform hover:scale-105">
+                  <i class="fa fa-eye mr-2"></i>عرض التفاصيل
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="overflow-x-auto rounded-lg overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">الخامة</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/20">الكود</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">التصنيف</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">المخزون</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">وحدة القياس</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">سعر الوحدة</th>
+            <th class="px-8 py-4 text-center text-sm font-medium text-gray-500 uppercase tracking-wider w-1/2">
+              <div class="flex items-center justify-center space-x-2 ">
+                <span>آخر تحديث</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </th>
+            <th class="px-6 py-4 text-center text-sm font-medium text-gray-500 uppercase tracking-wider w-1/12">
+              <div class="flex items-center justify-center space-x-2">
+                <span>الحالة</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/16">الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of getPaginatedLowStock()" class="border-b hover:bg-gray-50 transition-colors">
+            <td class="p-2 text-sm whitespace-normal text-center">
+              <div class="flex items-center justify-center">
+                <div>
+                  <p class="font-medium cursor-pointer hover:text-blue-600 transition-colors" (click)="openItemDetailsModal(item)">{{ item.name }}</p>
+                  <p class="text-sm text-gray-500">{{ item.manufacturer }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="p-2 text-sm whitespace-normal text-center">{{ item.code }}</td>
+            <td class="p-2 text-sm whitespace-normal text-center">{{ getCategoryName(item.categoryId) }}</td>
+            <td class="p-2 text-sm whitespace-normal text-center">
+              <span [class]="item.currentStock <= item.minStockLevel ? 'text-red-600 font-bold' : ''">{{ item.currentStock }}</span> {{ item.unit }}
+            </td>
+            <td class="p-2 text-sm whitespace-normal text-center">{{ item.unit }}</td>
+            <td class="p-2 text-sm whitespace-normal text-center">{{ item.unitPrice }} ج.م</td>
+            <td class="p-2 text-sm whitespace-normal text-center">{{ item.lastUpdated | date: 'dd MMMM yyyy h:mm a' : '' : 'ar-EG' }}</td>
+            <td class="p-2 text-sm whitespace-normal text-center">
+              <span class="px-2 py-1 rounded {{ getStatusBadgeClass(item.status) }}">{{ getItemStatusName(item.status) }}</span>
+            </td>
+            <td class="py-1 text-sm whitespace-normal">
+              <div class="flex justify-center gap-0.5">
+                <button (click)="openItemDetailsModal(item)" class="text-primary-600 hover:text-primary-900 transition-colors" title="عرض التفاصيل">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5 c4.478 0 8.268 2.943 9.542 7 -1.274 4.057-5.064 7-9.542 7 -4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button (click)="openEditItemModal(item)" class="text-blue-600 hover:text-blue-900 transition-colors" title="تعديل">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11 a2 2 0 002-2v-5m-1.414-9.414 a2 2 0 112.828 2.828L11.828 15H9 v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button (click)="confirmDeleteItem(item)" class="text-red-600 hover:text-red-900 transition-colors" title="حذف">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862 a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6 m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3 M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Reports Tab -->
+  <div class="tab-content" [class.active]="activeTab === 'analytics'">
+    <!-- Reports Header -->
+    <div class="mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-gray-800">
+          <i class="fa fa-chart-bar ml-2 text-blue-600"></i>
+          تقارير المخزون
+        </h2>
+        <div class="flex gap-2">
+          <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors" (click)="refreshReports()">
+            <i class="fa fa-refresh ml-2"></i>تحديث التقارير
+          </button>
+          <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors" (click)="exportReports()">
+            <i class="fa fa-download ml-2"></i>تصدير التقارير
+          </button>
+        </div>
+      </div>
+      
+      <!-- Date Range Filter -->
+      <div class="bg-gray-50 p-4 rounded-lg mb-6">
+        <div class="flex flex-wrap gap-4 items-end">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">من تاريخ</label>
+            <input type="date" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="reportsStartDate" (change)="onReportsDateChange()">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">إلى تاريخ</label>
+            <input type="date" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="reportsEndDate" (change)="onReportsDateChange()">
+          </div>
+          <div>
+            <button class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="setQuickDateRange('week')">
+              آخر أسبوع
+            </button>
+          </div>
+          <div>
+            <button class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="setQuickDateRange('month')">
+              آخر شهر
+            </button>
+          </div>
+          <div>
+            <button class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="setQuickDateRange('quarter')">
+              آخر 3 أشهر
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <!-- Inventory Summary Report -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">
+            <i class="fa fa-boxes ml-2 text-blue-600"></i>
+            ملخص المخزون
+          </h3>
+          <div class="text-sm text-gray-500">{{ getCurrentDate() }}</div>
+        </div>
+        <div class="space-y-3" *ngIf="reportsData?.inventoryStats">
+          <div class="flex justify-between items-center p-3 bg-blue-50 rounded">
+            <span class="text-gray-700">إجمالي الخامات</span>
+            <span class="font-bold text-blue-600">{{ reportsData.inventoryStats.totalItems }}</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-red-50 rounded">
+            <span class="text-gray-700">خامات منخفضة المخزون</span>
+            <span class="font-bold text-red-600">{{ reportsData.inventoryStats.lowStockItems }}</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-green-50 rounded">
+            <span class="text-gray-700">إجمالي قيمة المخزون</span>
+            <span class="font-bold text-green-600">{{ reportsData.inventoryStats.totalValue | number }} ج.م</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-purple-50 rounded">
+            <span class="text-gray-700">النمو الشهري</span>
+            <span class="font-bold text-purple-600">{{ reportsData.inventoryStats.monthlyGrowth || 0 }}%</span>
+          </div>
+        </div>
+        <div *ngIf="!reportsData?.inventoryStats" class="text-center py-4 text-gray-500">
+          <i class="fa fa-spinner fa-spin ml-2"></i>جاري تحميل البيانات...
+        </div>
+      </div>
+
+      <!-- Activity Summary Report -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">
+            <i class="fa fa-activity ml-2 text-green-600"></i>
+            ملخص الأنشطة
+          </h3>
+          <div class="text-sm text-gray-500">{{ getDateRangeText() }}</div>
+        </div>
+        <div class="space-y-3" *ngIf="reportsData?.activitySummary">
+          <div class="flex justify-between items-center p-3 bg-blue-50 rounded">
+            <span class="text-gray-700">إجمالي الإضافات</span>
+            <span class="font-bold text-blue-600">{{ reportsData.activitySummary.totalAdd || 0 }}</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-orange-50 rounded">
+            <span class="text-gray-700">إجمالي الاستهلاك</span>
+            <span class="font-bold text-orange-600">{{ reportsData.activitySummary.totalConsume || 0 }}</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-green-50 rounded">
+            <span class="text-gray-700">إجمالي الإنشاءات</span>
+            <span class="font-bold text-green-600">{{ reportsData.activitySummary.totalCreate || 0 }}</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-purple-50 rounded">
+            <span class="text-gray-700">إجمالي الأنشطة</span>
+            <span class="font-bold text-purple-600">{{ getTotalActivities() }}</span>
+          </div>
+        </div>
+        <div *ngIf="!reportsData?.activitySummary" class="text-center py-4 text-gray-500">
+          <i class="fa fa-spinner fa-spin ml-2"></i>جاري تحميل البيانات...
+        </div>
+      </div>
+    </div>
+
+    <!-- Categories Report -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">
+          <i class="fa fa-tags ml-2 text-purple-600"></i>
+          تقرير التصنيفات
+        </h3>
+        <button class="text-blue-600 hover:text-blue-800 transition-colors" (click)="toggleCategoriesReport()">
+          <i class="fa" [class.fa-chevron-down]="!showCategoriesReport" [class.fa-chevron-up]="showCategoriesReport"></i>
+        </button>
+      </div>
+      <div *ngIf="showCategoriesReport">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">التصنيف</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">عدد الخامات</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">إجمالي القيمة</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">متوسط القيمة</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let category of reportsData?.categories" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-900">{{ category.name }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">{{ category.itemCount }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">{{ category.totalValue | number }} ج.م</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">{{ (category.totalValue / category.itemCount) | number }} ج.م</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="!reportsData?.categories || reportsData.categories.length === 0" class="text-center py-4 text-gray-500">
+          لا توجد بيانات تصنيفات متاحة
+        </div>
+      </div>
+    </div>
+
+    <!-- Low Stock Items Report -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">
+          <i class="fa fa-exclamation-triangle ml-2 text-red-600"></i>
+          تقرير الخامات المنخفضة
+        </h3>
+        <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">{{ reportsData?.lowStockItems?.length || 0 }} خامة</span>
+      </div>
+      <div *ngIf="reportsData?.lowStockItems && reportsData.lowStockItems.length > 0">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">الخامة</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">المخزون الحالي</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">الحد الأدنى</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">الحالة</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">الإجراء المطلوب</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let item of reportsData.lowStockItems" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-900">{{ item.name }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-red-600 font-bold">{{ item.currentStock }} {{ item.unit }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">{{ item.minStockLevel }} {{ item.unit }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">{{ getItemStatusName(item.status) }}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <button class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors" (click)="openRestockModal(item)">
+                    إعادة تخزين
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div *ngIf="!reportsData?.lowStockItems || reportsData.lowStockItems.length === 0" class="text-center py-8 text-gray-500">
+        <i class="fa fa-check-circle text-4xl text-green-500 mb-2"></i>
+        <p>جميع الخامات في مستوى مخزون جيد</p>
+      </div>
+    </div>
+
+    <!-- Daily Activity Chart -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">
+          <i class="fa fa-chart-line ml-2 text-indigo-600"></i>
+          الأنشطة اليومية
+        </h3>
+        <div class="text-sm text-gray-500">آخر 7 أيام</div>
+      </div>
+      <div *ngIf="reportsData?.dailyActivities && reportsData.dailyActivities.length > 0">
+        <div class="space-y-2">
+          <div *ngFor="let day of reportsData.dailyActivities" class="flex items-center justify-between p-3 bg-gray-50 rounded">
+            <div class="font-medium text-gray-700">{{ day.date | date:'dd/MM/yyyy' }}</div>
+            <div class="flex gap-4 text-sm">
+              <span class="text-blue-600">إضافة: {{ day.totalAdd || 0 }}</span>
+              <span class="text-orange-600">استهلاك: {{ day.totalConsume || 0 }}</span>
+              <span class="text-green-600">إنشاء: {{ day.totalCreate || 0 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="!reportsData?.dailyActivities || reportsData.dailyActivities.length === 0" class="text-center py-8 text-gray-500">
+        <i class="fa fa-chart-line text-4xl text-gray-300 mb-2"></i>
+        <p>لا توجد أنشطة في الفترة المحددة</p>
+      </div>
+    </div>
+
+    <!-- Monthly Comparison -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">
+          <i class="fa fa-calendar-alt ml-2 text-teal-600"></i>
+          مقارنة شهرية
+        </h3>
+        <div class="text-sm text-gray-500">الشهر الحالي مقابل السابق</div>
+      </div>
+      <div *ngIf="reportsData?.monthlyComparison">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="text-center p-4 bg-blue-50 rounded">
+            <div class="text-2xl font-bold text-blue-600">{{ reportsData.monthlyComparison.currentMonth?.totalAdd || 0 }}</div>
+            <div class="text-sm text-gray-600 mb-2">إضافات هذا الشهر</div>
+            <div class="text-xs" [class.text-green-600]="getGrowthRate('totalAdd') >= 0" [class.text-red-600]="getGrowthRate('totalAdd') < 0">
+              {{ getGrowthRate('totalAdd') >= 0 ? '+' : '' }}{{ getGrowthRate('totalAdd') | number:'1.1-1' }}%
+            </div>
+          </div>
+          <div class="text-center p-4 bg-orange-50 rounded">
+            <div class="text-2xl font-bold text-orange-600">{{ reportsData.monthlyComparison.currentMonth?.totalConsume || 0 }}</div>
+            <div class="text-sm text-gray-600 mb-2">استهلاك هذا الشهر</div>
+            <div class="text-xs" [class.text-green-600]="getGrowthRate('totalConsume') >= 0" [class.text-red-600]="getGrowthRate('totalConsume') < 0">
+              {{ getGrowthRate('totalConsume') >= 0 ? '+' : '' }}{{ getGrowthRate('totalConsume') | number:'1.1-1' }}%
+            </div>
+          </div>
+          <div class="text-center p-4 bg-green-50 rounded">
+            <div class="text-2xl font-bold text-green-600">{{ reportsData.monthlyComparison.currentMonth?.totalCreate || 0 }}</div>
+            <div class="text-sm text-gray-600 mb-2">إنشاءات هذا الشهر</div>
+            <div class="text-xs" [class.text-green-600]="getGrowthRate('totalCreate') >= 0" [class.text-red-600]="getGrowthRate('totalCreate') < 0">
+              {{ getGrowthRate('totalCreate') >= 0 ? '+' : '' }}{{ getGrowthRate('totalCreate') | number:'1.1-1' }}%
+            </div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="!reportsData?.monthlyComparison" class="text-center py-4 text-gray-500">
+        <i class="fa fa-spinner fa-spin ml-2"></i>جاري تحميل البيانات...
+      </div>
+    </div>
+  </div>
+
+  <!-- Item Activities Report -->
+  <div class="bg-white rounded-lg shadow-md p-6 mb-6" *ngIf="activeTab === 'analytics'">
+    <div class="flex items-center justify-between mb-4 cursor-pointer" (click)="toggleItemActivitiesReport()">
+      <h3 class="text-lg font-semibold text-gray-800">
+        <i class="fa fa-list-alt ml-2 text-indigo-600"></i>
+        تقرير أنشطة الخامات التفصيلي
+      </h3>
+      <i class="fa" [class.fa-chevron-down]="!showItemActivitiesReport" [class.fa-chevron-up]="showItemActivitiesReport"></i>
+    </div>
+    <div *ngIf="showItemActivitiesReport">
+      <div class="mb-4 text-sm text-gray-600">
+        <i class="fa fa-info-circle ml-1"></i>
+        يعرض هذا التقرير تفاصيل الخامات التي تم استهلاكها وإضافتها خلال الفترة المحددة
+      </div>
+      <div *ngIf="reportsData?.itemActivities && reportsData.itemActivities.length > 0" class="overflow-x-auto">
+        <table class="min-w-full table-auto">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">اسم الخامة</th>
+              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الكود</th>
+              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">إجمالي المضاف</th>
+              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">إجمالي المستهلك</th>
+              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">إجمالي المنشأ</th>
+              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">صافي التغيير</th>
+              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الوحدة</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let activity of reportsData.itemActivities" class="hover:bg-gray-50">
+              <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ activity.itemName }}</td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ activity.itemCode }}</td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <i class="fa fa-plus mr-1"></i>
+                  {{ activity.totalAdded | number }}
+                </span>
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  <i class="fa fa-minus mr-1"></i>
+                  {{ activity.totalConsumed | number }}
+                </span>
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <i class="fa fa-plus-circle mr-1"></i>
+                  {{ activity.totalCreated | number }}
+                </span>
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                      [class.bg-green-100]="activity.netChange >= 0" 
+                      [class.text-green-800]="activity.netChange >= 0"
+                      [class.bg-red-100]="activity.netChange < 0" 
+                      [class.text-red-800]="activity.netChange < 0">
+                  <i class="fa mr-1" [class.fa-arrow-up]="activity.netChange >= 0" [class.fa-arrow-down]="activity.netChange < 0"></i>
+                  {{ activity.netChange >= 0 ? '+' : '' }}{{ activity.netChange | number }}
+                </span>
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ activity.unit }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div *ngIf="!reportsData?.itemActivities || reportsData.itemActivities.length === 0" class="text-center py-8 text-gray-500">
+        <i class="fa fa-inbox text-4xl mb-4 text-gray-300"></i>
+        <p>لا توجد أنشطة خامات في الفترة المحددة</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Item Modal -->
+  <div *ngIf="showAddItemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">إضافة خامة جديدة</h2>
+        <button class="modal-close text-gray-500 hover:text-gray-700 transition-colors" (click)="closeModals()">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <form [formGroup]="addItemForm" (ngSubmit)="addItem()">
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الاسم</label>
+          <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="name" required>
+          <div *ngIf="addItemForm.get('name')?.invalid && addItemForm.get('name')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="addItemForm.get('name')?.errors?.['required']">اسم الخامة مطلوب.</span>
+            <span *ngIf="addItemForm.get('name')?.errors?.['minlength']">يجب أن يحتوي اسم الخامة على الأقل على 3 أحرف.</span>
+            <span *ngIf="addItemForm.get('name')?.errors?.['maxlength']">يجب ألا يتجاوز اسم الخامة 100 حرف.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الكود</label>
+          <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="code" required>
+          <div *ngIf="addItemForm.get('code')?.invalid && addItemForm.get('code')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="addItemForm.get('code')?.errors?.['required']">كود الخامة مطلوب.</span>
+            <span *ngIf="addItemForm.get('code')?.errors?.['pattern']">يجب أن يحتوي الكود على أحرف وأرقام فقط.</span>
+            <span *ngIf="addItemForm.get('code')?.errors?.['maxlength']">يجب ألا يتجاوز الكود 20 حرفًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">التصنيف</label>
+          <select class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="categoryId" required>
+            <option value="">اختر تصنيف</option>
+            <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+          </select>
+          <div *ngIf="addItemForm.get('categoryId')?.invalid && addItemForm.get('categoryId')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="addItemForm.get('categoryId')?.errors?.['required']">يجب اختيار تصنيف للخامة.</span>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الشركة المصنعة</label>
+          <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="manufacturer">
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">المخزون الحالي</label>
+          <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="currentStock" required min="0">
+          <div *ngIf="addItemForm.get('currentStock')?.invalid && addItemForm.get('currentStock')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="addItemForm.get('currentStock')?.errors?.['required']">المخزون الحالي مطلوب.</span>
+            <span *ngIf="addItemForm.get('currentStock')?.errors?.['min']">المخزون الحالي يجب أن يكون أكبر من أو يساوي 0.</span>
+            <span *ngIf="addItemForm.get('currentStock')?.errors?.['pattern']">المخزون الحالي يجب أن يكون رقمًا صحيحًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">وحدة القياس</label>
+          <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="unit" required>
+          <div *ngIf="addItemForm.get('unit')?.invalid && addItemForm.get('unit')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="addItemForm.get('unit')?.errors?.['required']">وحدة القياس مطلوبة.</span>
+            <span *ngIf="addItemForm.get('unit')?.errors?.['maxlength']">يجب ألا تتجاوز وحدة القياس 20 حرفًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">سعر الوحدة</label>
+          <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="unitPrice" min="0">
+          <div *ngIf="addItemForm.get('unitPrice')?.invalid && addItemForm.get('unitPrice')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="addItemForm.get('unitPrice')?.errors?.['min']">سعر الوحدة يجب أن يكون أكبر من أو يساوي 0.</span>
+            <span *ngIf="addItemForm.get('unitPrice')?.errors?.['pattern']">سعر الوحدة يجب أن يكون رقمًا صحيحًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الحد الأدنى للمخزون</label>
+          <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="minStockLevel" min="0">
+          <div *ngIf="addItemForm.get('minStockLevel')?.invalid && addItemForm.get('minStockLevel')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="addItemForm.get('minStockLevel')?.errors?.['min']">الحد الأدنى يجب أن يكون أكبر من أو يساوي 0.</span>
+            <span *ngIf="addItemForm.get('minStockLevel')?.errors?.['pattern']">الحد الأدنى يجب أن يكون رقمًا صحيحًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الحد الأقصى للمخزون</label>
+          <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="maxStockLevel" min="0">
+          <div *ngIf="addItemForm.get('maxStockLevel')?.invalid && addItemForm.get('maxStockLevel')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="addItemForm.get('maxStockLevel')?.errors?.['min']">الحد الأقصى يجب أن يكون أكبر من أو يساوي 0.</span>
+            <span *ngIf="addItemForm.get('maxStockLevel')?.errors?.['pattern']">الحد الأقصى يجب أن يكون رقمًا صحيحًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الوصف (اختياري)</label>
+          <textarea class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="description"></textarea>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الموقع (اختياري)</label>
+          <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="location">
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">تاريخ الانتهاء (اختياري)</label>
+          <input type="date" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="expiryDate">
+        </div>
+        <div *ngIf="successMessage" class="bg-green-100 p-2 mt-4 text-green-800">{{successMessage}}</div>
+        <div *ngIf="errorMessage" class="bg-red-100 p-2 mt-4 text-red-800">{{errorMessage}}</div>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="closeModals()">إلغاء</button>
+          <button type="submit" class="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors" [disabled]="addItemForm.invalid" [class.opacity-50]="addItemForm.invalid">إضافة</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Edit Item Modal -->
+  <div *ngIf="showEditItemModal && selectedItem" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">تعديل خامة</h2>
+        <button class="modal-close text-gray-500 hover:text-gray-700 transition-colors" (click)="closeModals()">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <form [formGroup]="editItemForm">
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الاسم</label>
+          <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="name" required>
+          <div *ngIf="editItemForm.get('name')?.invalid && editItemForm.get('name')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="editItemForm.get('name')?.errors?.['required']">اسم الخامة مطلوب.</span>
+            <span *ngIf="editItemForm.get('name')?.errors?.['minlength']">يجب أن يحتوي اسم الخامة على الأقل على 3 أحرف.</span>
+            <span *ngIf="editItemForm.get('name')?.errors?.['maxlength']">يجب ألا يتجاوز اسم الخامة 100 حرف.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الكود</label>
+          <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="code" required>
+          <div *ngIf="editItemForm.get('code')?.invalid && editItemForm.get('code')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="editItemForm.get('code')?.errors?.['required']">كود الخامة مطلوب.</span>
+            <span *ngIf="editItemForm.get('code')?.errors?.['pattern']">يجب أن يحتوي الكود على أحرف وأرقام فقط.</span>
+            <span *ngIf="editItemForm.get('code')?.errors?.['maxlength']">يجب ألا يتجاوز الكود 20 حرفًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">التصنيف</label>
+          <select class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="categoryId" required>
+            <option value="">اختر تصنيف</option>
+            <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+          </select>
+          <div *ngIf="editItemForm.get('categoryId')?.invalid && editItemForm.get('categoryId')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="editItemForm.get('categoryId')?.errors?.['required']">يجب اختيار تصنيف للخامة.</span>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الشركة المصنعة</label>
+          <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="manufacturer">
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm mb-1">وحدة القياس</label>
+          <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="unit" required>
+          <div *ngIf="editItemForm.get('unit')?.invalid && editItemForm.get('unit')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="editItemForm.get('unit')?.errors?.['required']">وحدة القياس مطلوبة.</span>
+            <span *ngIf="editItemForm.get('unit')?.errors?.['maxlength']">يجب ألا تتجاوز وحدة القياس 20 حرفًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">سعر الوحدة</label>
+          <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="unitPrice" min="0">
+          <div *ngIf="editItemForm.get('unitPrice')?.invalid && editItemForm.get('unitPrice')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="editItemForm.get('unitPrice')?.errors?.['min']">سعر الوحدة يجب أن يكون أكبر من أو يساوي 0.</span>
+            <span *ngIf="editItemForm.get('unitPrice')?.errors?.['pattern']">سعر الوحدة يجب أن يكون رقمًا صحيحًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الحد الأدنى للمخزون</label>
+          <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="minStockLevel" min="0">
+          <div *ngIf="editItemForm.get('minStockLevel')?.invalid && editItemForm.get('minStockLevel')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="editItemForm.get('minStockLevel')?.errors?.['min']">الحد الأدنى يجب أن يكون أكبر من أو يساوي 0.</span>
+            <span *ngIf="editItemForm.get('minStockLevel')?.errors?.['pattern']">الحد الأدنى يجب أن يكون رقمًا صحيحًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الحد الأقصى للمخزون</label>
+          <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="maxStockLevel" min="0">
+          <div *ngIf="editItemForm.get('maxStockLevel')?.invalid && editItemForm.get('maxStockLevel')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="editItemForm.get('maxStockLevel')?.errors?.['min']">الحد الأقصى يجب أن يكون أكبر من أو يساوي 0.</span>
+            <span *ngIf="editItemForm.get('maxStockLevel')?.errors?.['pattern']">الحد الأقصى يجب أن يكون رقمًا صحيحًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الوصف (اختياري)</label>
+          <textarea class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="description"></textarea>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">الموقع (اختياري)</label>
+          <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="location">
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm mb-1">تاريخ الانتهاء (اختياري)</label>
+          <input type="date" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="expiryDate">
+        </div>
+        <div *ngIf="successMessage" class="bg-green-100 p-2 mt-4 text-green-800">{{successMessage}}</div>
+        <div *ngIf="errorMessage" class="bg-red-100 p-2 mt-4 text-red-800">{{errorMessage}}</div>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="closeModals()">إلغاء</button>
+          <button type="button" class="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors" [disabled]="editItemForm.invalid" [class.opacity-50]="editItemForm.invalid" (click)="updateItem()">حفظ التعديلات</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Add Category Modal -->
+  <div *ngIf="showAddCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">أضف تصنيف جديد</h2>
+        <button class="modal-close text-gray-500 hover:text-gray-700 transition-colors" (click)="closeModals()">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <form [formGroup]="addCategoryForm" (ngSubmit)="addCategory()">
+        <div class="mb-4">
+          <label for="categoryName" class="block text-sm mb-1">اسم التصنيف</label>
+          <input id="categoryName" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="name" required>
+          <div *ngIf="addCategoryForm.get('name')?.invalid && addCategoryForm.get('name')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="addCategoryForm.get('name')?.errors?.['required']">اسم التصنيف مطلوب.</span>
+            <span *ngIf="addCategoryForm.get('name')?.errors?.['minlength']">يجب أن يحتوي اسم التصنيف على الأقل على 3 أحرف.</span>
+            <span *ngIf="addCategoryForm.get('name')?.errors?.['maxlength']">يجب ألا يتجاوز اسم التصنيف 50 حرفًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label for="categoryCode" class="block text-sm mb-1">الكود</label>
+          <input id="categoryCode" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="code" required>
+          <div *ngIf="addCategoryForm.get('code')?.invalid && addCategoryForm.get('code')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="addCategoryForm.get('code')?.errors?.['required']">كود التصنيف مطلوب.</span>
+            <span *ngIf="addCategoryForm.get('code')?.errors?.['pattern']">يجب أن يحتوي الكود على أحرف وأرقام فقط.</span>
+          </div>
+        </div>
+        <div *ngIf="successMessage" class="bg-green-100 p-2 mt-4 text-green-800">{{successMessage}}</div>
+        <div *ngIf="errorMessage" class="bg-red-100 p-2 mt-4 text-red-800">{{errorMessage}}</div>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="closeModals()">إالغاء</button>
+          <button type="submit" class="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors" [disabled]="addCategoryForm.invalid" [class.opacity-50]="addCategoryForm.invalid">إضافة تصنيف</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Edit Category Modal -->
+  <div *ngIf="showEditCategoryModal && editSelectedCategory" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">تعديل تصنيف</h2>
+        <button class="modal-close text-gray-500 hover:text-gray-700 transition-colors" (click)="closeModals()">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <form [formGroup]="editCategoryForm" (ngSubmit)="updateCategory()">
+        <div class="mb-4">
+          <label for="editCategoryName" class="block text-sm mb-1">الاسم</label>
+          <input id="editCategoryName" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="name" required>
+          <div *ngIf="editCategoryForm.get('name')?.invalid && editCategoryForm.get('name')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="editCategoryForm.get('name')?.errors?.['required']">اسم التصنيف مطلوب.</span>
+            <span *ngIf="editCategoryForm.get('name')?.errors?.['minlength']">يجب أن يحتوي اسم التصنيف على الأقل على 3 أحرف.</span>
+            <span *ngIf="editCategoryForm.get('name')?.errors?.['maxlength']">يجب ألا يتجاوز اسم التصنيف 50 حرفًا.</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label for="editCategoryCode" class="block text-sm mb-1">الكود</label>
+          <input id="editCategoryCode" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow" formControlName="code" required>
+          <div *ngIf="editCategoryForm.get('code')?.invalid && editCategoryForm.get('code')?.touched" class="text-red-500 text-sm">
+            <span *ngIf="editCategoryForm.get('code')?.errors?.['required']">كود التصنيف مطلوب.</span>
+            <span *ngIf="editCategoryForm.get('code')?.errors?.['pattern']">يجب أن يحتوي الكود على أحرف وأرقام فقط.</span>
+          </div>
+        </div>
+        <div *ngIf="successMessage" class="bg-green-100 p-2 mt-4 text-green-800">{{successMessage}}</div>
+        <div *ngIf="errorMessage" class="bg-red-100 p-2 mt-4 text-red-800">{{errorMessage}}</div>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="closeModals()">إلغاء</button>
+          <button type="submit" class="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors" [disabled]="editCategoryForm.invalid" [class.opacity-50]="editCategoryForm.invalid">تحديث التصنيف</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Item Details Modal -->
+  <div *ngIf="showItemDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">تفاصيل الخامة</h2>
+        <button class="modal-close text-gray-500 hover:text-gray-700 transition-colors" (click)="closeModals()">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+
+      <div *ngIf="selectedItem" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">اسم الخامة</label>
+            <p class="text-lg font-semibold">{{ selectedItem.name }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">الكود</label>
+            <p>{{ selectedItem.code }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">التصنيف</label>
+            <p>{{ selectedItem.categoryName }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">الشركة المصنعة</label>
+            <p>{{ selectedItem.manufacturer }}</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700">الموقع</label>
+            <p>{{ selectedItem.location || 'غير محدد' }}</p>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">المخزون الحالي</label>
+            <p class="text-lg" [class]="selectedItem.currentStock <= selectedItem.minStockLevel ? 'text-red-600 font-bold' : 'font-semibold'">{{ selectedItem.currentStock }} {{ selectedItem.unit }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">الحد الأدنى</label>
+            <p>{{ selectedItem.minStockLevel }} {{ selectedItem.unit }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">الحد الأقصى</label>
+            <p>{{ selectedItem.maxStockLevel }} {{ selectedItem.unit }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">سعر الوحدة</label>
+            <p class="text-lg font-semibold">{{ selectedItem.unitPrice }} ج.م</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">تاريخ الانتهاء</label>
+            <p>{{ (selectedItem.expiryDate | date: 'dd MMMM yyyy h:mm a' : '' : 'ar-EG') || 'غير محدد' }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">آخر تحديث</label>
+            <p>{{ selectedItem.lastUpdated | date: 'dd MMMM yyyy h:mm a' : '' : 'ar-EG' }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">الحالة</label>
+            <span class="px-2 py-1 rounded {{ getStatusBadgeClass(selectedItem.status) }}">{{ getItemStatusName(selectedItem.status) }}</span>
+          </div>
+        </div>
+        <div class="col-span-1 md:col-span-2" *ngIf="selectedItem.description">
+          <label class="block text-sm font-medium text-gray-700">الوصف</label>
+          <p class="bg-gray-50 p-3 rounded">{{ selectedItem.description }}</p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-6">
+        <button class="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded flex items-center transition-colors" (click)="openEditItemModal(selectedItem!)">
+          <i class="fa fa-edit mr-2"></i>تعديل
+        </button>
+        <button class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="closeModals()">إغلاق</button>
+      </div>
+      <div *ngIf="successMessage" class="bg-green-100 p-2 mt-4 text-green-800">{{successMessage}}</div>
+      <div *ngIf="errorMessage" class="bg-red-100 p-2 mt-4 text-red-800">{{errorMessage}}</div>
+    </div>
+  </div>
+<!-- End of Item Details Modal -->
+
+<!-- Low Stock Pagination -->
+<div *ngIf="getTotalLowStockPages() > 1" class="mt-6 flex items-center justify-center">
+  <p>عرض {{ (currentLowStockPage - 1) * lowStockPerPage + 1 }} إلى {{ Math.min(currentLowStockPage * lowStockPerPage, lowStockItems.length) }} من {{ lowStockItems.length }} خامة منخفضة</p>
+  <div class="flex gap-2">
+    <button class="px-3 py-1 border rounded disabled:opacity-50" [disabled]="currentLowStockPage === 1" (click)="onLowStockPageChange(currentLowStockPage - 1)">السابق</button>
+    <button *ngFor="let page of getLowStockPageNumbers()" class="px-3 py-1 border rounded" [class.bg-blue-600]="page === currentLowStockPage" [class.text-white]="page === currentLowStockPage" (click)="onLowStockPageChange(page)">
+      {{ page }}
+    </button>
+    <button class="px-3 py-1 border rounded disabled:opacity-50" [disabled]="currentLowStockPage === getTotalLowStockPages()" (click)="onLowStockPageChange(currentLowStockPage + 1)">التالي</button>
+  </div>
+</div>
+
+
+<!-- Delete Confirmation Modal -->
+<div *ngIf="showDeleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">تأكيد الحذف</h2>
+      <button class="modal-close text-gray-500 hover:text-gray-700 transition-colors" (click)="closeModals()">
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+    <p class="mb-4">هل أنت متأكد من حذف هذه الخامة؟</p>
+    <div *ngIf="errorMessage" class="bg-red-100 p-2 mt-4 mb-4 text-red-800 rounded">{{errorMessage}}</div>
+    <div class="flex justify-end gap-2">
+      <button class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="closeModals()">إلغاء</button>
+      <button class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors" (click)="deleteItem()">حذف</button>
+    </div>
+  </div>
+</div>
+
+<!-- Consume Item Modal -->
+<div *ngIf="showConsumeModal && selectedItem" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">استهلاك خامة</h2>
+      <button class="modal-close text-gray-500 hover:text-gray-700 transition-colors" (click)="closeModals()">
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+    <form [formGroup]="consumeForm" (ngSubmit)="consumeItem()">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">الخامة</label>
+        <p class="text-lg font-semibold">{{ selectedItem.name }}</p>
+        <p class="text-sm text-gray-600">المخزون الحالي: {{ selectedItem.currentStock }} {{ selectedItem.unit }}</p>
+      </div>
+      <div class="mb-4">
+        <label for="consumeQuantity" class="block text-sm font-medium text-gray-700 mb-1">الكمية المستهلكة</label>
+        <input id="consumeQuantity" type="number" min="1" [max]="selectedItem.currentStock" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 transition-shadow" formControlName="quantity" required>
+        <div *ngIf="consumeForm.get('quantity')?.invalid && consumeForm.get('quantity')?.touched" class="text-red-500 text-sm mt-1">
+          <span *ngIf="consumeForm.get('quantity')?.errors?.['required']">الكمية مطلوبة.</span>
+          <span *ngIf="consumeForm.get('quantity')?.errors?.['min']">يجب أن تكون الكمية أكبر من صفر.</span>
+          <span *ngIf="consumeForm.get('quantity')?.errors?.['max']">الكمية تتجاوز المخزون المتاح.</span>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label for="consumeNotes" class="block text-sm font-medium text-gray-700 mb-1">ملاحظات (اختياري)</label>
+        <textarea id="consumeNotes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 transition-shadow" formControlName="notes" placeholder="سبب الاستهلاك..."></textarea>
+      </div>
+      <div *ngIf="successMessage" class="bg-green-100 p-2 mt-4 text-green-800 rounded">{{successMessage}}</div>
+      <div *ngIf="errorMessage" class="bg-red-100 p-2 mt-4 text-red-800 rounded">{{errorMessage}}</div>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="closeModals()">إلغاء</button>
+        <button type="submit" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 transition-colors" [disabled]="consumeForm.invalid" [class.opacity-50]="consumeForm.invalid">استهلاك</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Restock Item Modal -->
+<div *ngIf="showRestockModal && selectedItem" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">إعادة تخزين خامة</h2>
+      <button class="modal-close text-gray-500 hover:text-gray-700 transition-colors" (click)="closeModals()">
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+    <form [formGroup]="restockForm" (ngSubmit)="restockItem()">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">الخامة</label>
+        <p class="text-lg font-semibold">{{ selectedItem.name }}</p>
+        <p class="text-sm text-gray-600">المخزون الحالي: {{ selectedItem.currentStock }} {{ selectedItem.unit }}</p>
+      </div>
+      <div class="mb-4">
+        <label for="restockQuantity" class="block text-sm font-medium text-gray-700 mb-1">الكمية المضافة</label>
+        <input id="restockQuantity" type="number" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-shadow" formControlName="quantity" required>
+        <div *ngIf="restockForm.get('quantity')?.invalid && restockForm.get('quantity')?.touched" class="text-red-500 text-sm mt-1">
+          <span *ngIf="restockForm.get('quantity')?.errors?.['required']">الكمية مطلوبة.</span>
+          <span *ngIf="restockForm.get('quantity')?.errors?.['min']">يجب أن تكون الكمية أكبر من صفر.</span>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label for="restockNotes" class="block text-sm font-medium text-gray-700 mb-1">ملاحظات (اختياري)</label>
+        <textarea id="restockNotes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-shadow" formControlName="notes" placeholder="مصدر الإعادة تخزين..."></textarea>
+      </div>
+      <div *ngIf="successMessage" class="bg-green-100 p-2 mt-4 text-green-800 rounded">{{successMessage}}</div>
+      <div *ngIf="errorMessage" class="bg-red-100 p-2 mt-4 text-red-800 rounded">{{errorMessage}}</div>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="closeModals()">إلغاء</button>
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors" [disabled]="restockForm.invalid" [class.opacity-50]="restockForm.invalid">إعادة تخزين</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Adjust Stock Modal -->
+<div *ngIf="showAdjustModal && selectedItem" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">تعديل مخزون خامة</h2>
+      <button class="modal-close text-gray-500 hover:text-gray-700 transition-colors" (click)="closeModals()">
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+    <form [formGroup]="adjustForm" (ngSubmit)="updateItemStock()">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">الخامة</label>
+        <p class="text-lg font-semibold">{{ selectedItem.name }}</p>
+        <p class="text-sm text-gray-600">المخزون الحالي: {{ selectedItem.currentStock }} {{ selectedItem.unit }}</p>
+      </div>
+      <div class="mb-4">
+        <label for="adjustQuantity" class="block text-sm font-medium text-gray-700 mb-1">المخزون الجديد</label>
+        <input id="adjustQuantity" type="number" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 transition-shadow" formControlName="newQuantity" required>
+        <div *ngIf="adjustForm.get('newQuantity')?.invalid && adjustForm.get('newQuantity')?.touched" class="text-red-500 text-sm mt-1">
+          <span *ngIf="adjustForm.get('newQuantity')?.errors?.['required']">الكمية الجديدة مطلوبة.</span>
+          <span *ngIf="adjustForm.get('newQuantity')?.errors?.['min']">يجب أن تكون الكمية صفر أو أكبر.</span>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label for="adjustNotes" class="block text-sm font-medium text-gray-700 mb-1">ملاحظات (اختياري)</label>
+        <textarea id="adjustNotes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 transition-shadow" formControlName="notes" placeholder="سبب التعديل..."></textarea>
+      </div>
+      <div *ngIf="successMessage" class="bg-green-100 p-2 mt-4 text-green-800 rounded">{{successMessage}}</div>
+      <div *ngIf="errorMessage" class="bg-red-100 p-2 mt-4 text-red-800 rounded">{{errorMessage}}</div>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition-colors" (click)="closeModals()">إلغاء</button>
+        <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors" [disabled]="adjustForm.invalid" [class.opacity-50]="adjustForm.invalid">تحديث المخزون</button>
+      </div>
+    </form>
+  </div>
+</div>

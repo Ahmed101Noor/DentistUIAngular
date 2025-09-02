@@ -1,0 +1,469 @@
+<div class="bg-white rounded-lg shadow-md p-6 max-w-3xl mx-auto">
+  <h2 class="text-2xl font-semibold text-primary-800 mb-6">تسجيل مريض جديد</h2>
+
+  <form [formGroup]="patientForm" (ngSubmit)="onSubmit()">
+    <!-- Patient Information -->
+    <div class="mb-8">
+      <h3
+        class="text-lg font-medium text-primary-700 mb-4 pb-2 border-b border-gray-200"
+      >
+        معلومات المريض
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- First Name -->
+        <div>
+          <label
+            for="firstName"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >الاسم الأول <span class="text-red-500">*</span></label
+          >
+          <input
+            type="text"
+            id="firstName"
+            formControlName="firstName"
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="أدخل الاسم الأول"
+          />
+          <div
+            *ngIf="getFieldError('firstName')"
+            class="text-red-500 text-sm mt-1"
+          >
+            {{ getFieldError("firstName") }}
+          </div>
+        </div>
+        <!-- Middle Name -->
+        <div>
+          <label
+            for="middleName"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >الاسم الأوسط</label
+          >
+          <input
+            type="text"
+            id="middleName"
+            formControlName="middleName"
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="أدخل الاسم الأوسط (اختياري)"
+          />
+        </div>
+        <!-- Last Name -->
+        <div class="col-span-1 md:col-span-2">
+          <label
+            for="lastName"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >اسم العائلة <span class="text-red-500">*</span></label
+          >
+          <input
+            type="text"
+            id="lastName"
+            formControlName="lastName"
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="أدخل اسم العائلة"
+          />
+          <div
+            *ngIf="getFieldError('lastName')"
+            class="text-red-500 text-sm mt-1"
+          >
+            {{ getFieldError("lastName") }}
+          </div>
+        </div>
+        <!-- Age -->
+        <div>
+          <label for="age" class="block text-sm font-medium text-gray-700 mb-1"
+            >العمر <span class="text-red-500">*</span></label
+          >
+          <input
+            type="number"
+            id="age"
+            formControlName="age"
+            min="0"
+            max="120"
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="أدخل العمر"
+          />
+          <div *ngIf="getFieldError('age')" class="text-red-500 text-sm mt-1">
+            {{ getFieldError("age") }}
+          </div>
+        </div>
+
+        <!-- Gender -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            الجنس <span class="text-red-500">*</span>
+          </label>
+          <div class="flex space-x-4 space-x-reverse mt-2">
+            <div class="flex items-center">
+              <input
+                type="radio"
+                id="male"
+                formControlName="gender"
+                value="Male"
+                required
+                class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+              />
+              <label for="male" class="mr-2 text-sm text-gray-700">ذكر</label>
+            </div>
+            <div class="flex items-center">
+              <input
+                type="radio"
+                id="female"
+                formControlName="gender"
+                value="Female"
+                class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+              />
+              <label for="female" class="mr-2 text-sm text-gray-700"
+                >أنثى</label
+              >
+            </div>
+          </div>
+          <div
+            *ngIf="getFieldError('gender')"
+            class="text-red-500 text-sm mt-1"
+          >
+            {{ getFieldError("gender") }}
+          </div>
+        </div>
+        <!-- Phone Number -->
+        <div class="col-span-1 md:col-span-2">
+          <label
+            for="phoneNumber"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >رقم الهاتف <span class="text-red-500">*</span></label
+          >
+          <input
+            type="text"
+            id="phoneNumber"
+            formControlName="phoneNumber"
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="أدخل رقم الهاتف"
+          />
+          <div
+            *ngIf="getFieldError('phoneNumber')"
+            class="text-red-500 text-sm mt-1"
+          >
+            {{ getFieldError("phoneNumber") }}
+          </div>
+        </div>
+        <!-- City -->
+        <div>
+          <label for="city" class="block text-sm font-medium text-gray-700 mb-1"
+            >المدينة <span class="text-red-500">*</span></label
+          >
+          <input
+            type="text"
+            id="city"
+            formControlName="city"
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="أدخل اسم المدينة"
+          />
+          <div *ngIf="getFieldError('city')" class="text-red-500 text-sm mt-1">
+            {{ getFieldError("city") }}
+          </div>
+        </div>
+        <!-- Street (Optional) -->
+        <div>
+          <label
+            for="street"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >الشارع</label
+          >
+          <input
+            type="text"
+            id="street"
+            formControlName="street"
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="أدخل اسم الشارع (اختياري)"
+          />
+        </div>
+        <!-- Doctor Notes (Optional) -->
+        <div class="col-span-1 md:col-span-2">
+          <label
+            for="doctorNotes"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >ملاحظات الطبيب</label
+          >
+          <textarea
+            id="doctorNotes"
+            formControlName="doctorNotes"
+            rows="3"
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="أدخل أي ملاحظات للطبيب (اختياري)"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Medical History -->
+    <div class="mb-8">
+      <h3
+        class="text-lg font-medium text-primary-700 mb-4 pb-2 border-b border-gray-200"
+      >
+        التاريخ الطبي
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="space-y-3">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="infectiousHepatitis"
+              formControlName="infectiousHepatitis"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label
+              for="infectiousHepatitis"
+              class="mr-2 text-sm text-gray-700"
+              >التهاب الكبد المعدي</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="allergies"
+              formControlName="allergies"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="allergies" class="mr-2 text-sm text-gray-700"
+              >الحساسية</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="asthma"
+              formControlName="asthma"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="asthma" class="mr-2 text-sm text-gray-700"
+              >الربو</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="diabetes"
+              formControlName="diabetes"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="diabetes" class="mr-2 text-sm text-gray-700"
+              >مرض السكري</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="radiationTherapy"
+              formControlName="radiationTherapy"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="radiationTherapy" class="mr-2 text-sm text-gray-700"
+              >العلاج الإشعاعي</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="epilepsy"
+              formControlName="epilepsy"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="epilepsy" class="mr-2 text-sm text-gray-700"
+              >الصرع</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="hivPositive"
+              formControlName="hivPositive"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="hivPositive" class="mr-2 text-sm text-gray-700"
+              >فيروس نقص المناعة البشرية</label
+            >
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="anemia"
+              formControlName="anemia"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="anemia" class="mr-2 text-sm text-gray-700"
+              >فقر الدم</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="heartDisease"
+              formControlName="heartDisease"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="heartDisease" class="mr-2 text-sm text-gray-700"
+              >أمراض القلب</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="hypertension"
+              formControlName="hypertension"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="hypertension" class="mr-2 text-sm text-gray-700"
+              >ارتفاع ضغط الدم</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="hypotension"
+              formControlName="hypotension"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="hypotension" class="mr-2 text-sm text-gray-700"
+              >انخفاض ضغط الدم</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="hemophilia"
+              formControlName="hemophilia"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="hemophilia" class="mr-2 text-sm text-gray-700"
+              >الهيموفيليا</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="kidneyDisease"
+              formControlName="kidneyDisease"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="kidneyDisease" class="mr-2 text-sm text-gray-700"
+              >أمراض الكلى</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="liverDisease"
+              formControlName="liverDisease"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="liverDisease" class="mr-2 text-sm text-gray-700"
+              >أمراض الكبد</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="pepticUlcer"
+              formControlName="pepticUlcer"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+            /><label for="pepticUlcer" class="mr-2 text-sm text-gray-700"
+              >قرحة المعدة</label
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Appointment Details -->
+    <div class="mb-8">
+      <h3
+        class="text-lg font-medium text-primary-700 mb-4 pb-2 border-b border-gray-200"
+      >
+        تفاصيل الموعد
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Appointment Date -->
+        <div>
+          <label
+            for="appointmentDate"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >تاريخ الموعد <span class="text-red-500">*</span></label
+          >
+          <input
+            type="date"
+            id="appointmentDate"
+            formControlName="appointmentDate"
+            [min]="today"
+            (change)="onDateChange()"
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+          <div
+            *ngIf="getFieldError('appointmentDate')"
+            class="text-red-500 text-sm mt-1"
+          >
+            {{ getFieldError("appointmentDate") }}
+          </div>
+        </div>
+        <!-- Services Multi-Select -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            الخدمات <span class="text-red-500">*</span>
+          </label>
+          <ul class="w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+            <li *ngFor="let service of services; let i = index" 
+                class="w-full border-b border-gray-200 last:border-b-0" 
+                [class.rounded-t-lg]="i === 0" 
+                [class.rounded-b-lg]="i === services.length - 1">
+              <div class="flex items-center ps-3">
+                <input 
+                  [id]="'service-' + service.id" 
+                  type="checkbox" 
+                  [value]="service.id"
+                  (change)="onServiceCheckboxChange(service.id, $event)"
+                  class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-primary-500 focus:ring-2">
+                <label 
+                  [for]="'service-' + service.id" 
+                  class="w-full py-3 ms-2 text-sm font-medium text-gray-900">
+                  {{ service.name }} ({{ service.durationInMinutes }} دقيقة)
+                </label>
+              </div>
+            </li>
+          </ul>
+          <div
+            *ngIf="getFieldError('serviceIds')"
+            class="text-red-500 text-sm mt-1"
+          >
+            {{ getFieldError("serviceIds") }}
+          </div>
+        </div>
+        <!-- Slot Picker -->
+        <div>
+          <label for="slot" class="block text-sm font-medium text-gray-700 mb-1"
+            >الوقت المتاح <span class="text-red-500">*</span></label
+          >
+          <select
+            id="slot"
+            formControlName="slot"
+            (change)="onSlotChange($event)"
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="">اختر الوقت</option>
+            <option *ngFor="let slot of availableSlots" [value]="slot">
+              {{ slot | date : "shortTime" }}
+            </option>
+          </select>
+          <div
+            *ngIf="
+              !availableSlots.length &&
+              patientForm.value.appointmentDate &&
+              patientForm.value.serviceIds.length
+            "
+            class="text-red-500 text-sm mt-1"
+          >
+            لا توجد أوقات متاحة لهذا اليوم والخدمات المختارة.
+          </div>
+          <div *ngIf="getFieldError('slot')" class="text-red-500 text-sm mt-1">
+            {{ getFieldError("slot") }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="flex justify-end">
+      <button
+        type="submit"
+        [disabled]="patientForm.invalid"
+        class="bg-primary-600 text-white px-6 py-2 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        تسجيل المريض وحجز الموعد
+      </button>
+    </div>
+  </form>
+</div>
